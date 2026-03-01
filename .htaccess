@@ -1,7 +1,9 @@
 RewriteEngine On
 
-# Force HTTPS
+# Force HTTPS (compatible with REG.RU proxy/load balancer)
 RewriteCond %{HTTPS} off
+RewriteCond %{HTTP:X-Forwarded-Proto} !https
+RewriteCond %{HTTP:X-Forwarded-SSL} !on
 RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 
 # Handle PHP API requests
