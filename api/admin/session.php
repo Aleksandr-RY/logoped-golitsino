@@ -66,6 +66,12 @@ function validateCSRFToken(): void {
     if (empty($token)) {
         $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
     }
+    if (empty($token)) {
+        $token = $_ENV['HTTP_X_CSRF_TOKEN'] ?? '';
+    }
+    if (empty($token)) {
+        $token = getenv('HTTP_X_CSRF_TOKEN') ?: '';
+    }
 
     if (empty($token) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
         http_response_code(403);

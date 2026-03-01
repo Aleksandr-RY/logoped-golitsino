@@ -1,5 +1,12 @@
 RewriteEngine On
 
+# Pass Authorization header to PHP (required on shared hosting)
+SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Pass X-CSRF-Token header to PHP
+RewriteRule .* - [E=HTTP_X_CSRF_TOKEN:%{HTTP:X-CSRF-Token}]
+
 # Force HTTPS (compatible with REG.RU proxy/load balancer)
 RewriteCond %{HTTPS} off
 RewriteCond %{HTTP:X-Forwarded-Proto} !https
