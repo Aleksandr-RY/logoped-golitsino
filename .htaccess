@@ -1,0 +1,16 @@
+RewriteEngine On
+
+# Force HTTPS
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Handle PHP API requests
+RewriteRule ^api/(.*)$ api/$1 [L,QSA]
+
+# Handle existing files and directories
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# SPA fallback - send all other requests to index.html
+RewriteRule ^ index.html [L]
