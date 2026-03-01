@@ -4,12 +4,15 @@ require_once __DIR__ . '/../config.php';
 function startSecureSession(): void {
     if (session_status() === PHP_SESSION_ACTIVE) return;
 
-    $isProduction = !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off';
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https')
+        || (!empty($_SERVER['HTTP_X_FORWARDED_SSL']) && $_SERVER['HTTP_X_FORWARDED_SSL'] === 'on')
+        || (isset($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] == 443);
 
     session_set_cookie_params([
         'lifetime' => 1800,
         'path' => '/',
-        'secure' => $isProduction,
+        'secure' => $isHttps,
         'httponly' => true,
         'samesite' => 'Lax',
     ]);
@@ -49,9 +52,22 @@ function generateCSRFToken(): string {
 
 function validateCSRFToken(): void {
     startSecureSession();
-    $headers = getallheaders();
-    $token = $headers['X-CSRF-Token'] ?? $headers['x-csrf-token'] ?? '';
-    if (empty($token) || !hash_equals($_SESSION['csrf_token'] ?? '', $token)) {
+
+    $token = '';
+    if (function_exists('getallheaders')) {
+        $headers = getallheaders();
+        foreach ($headers as $key => $value) {
+            if (strtolower($key) === 'x-csrf-token') {
+                $token = $value;
+                break;
+            }
+        }
+    }
+    if (empty($token)) {
+        $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    }
+
+    if (empty($token) || empty($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $token)) {
         http_response_code(403);
         header('Content-Type: application/json');
         echo json_encode(['message' => 'Invalid CSRF token']);

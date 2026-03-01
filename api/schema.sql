@@ -25,8 +25,8 @@ CREATE TABLE IF NOT EXISTS bookings (
     problem VARCHAR(500) NOT NULL,
     preferred_date DATE DEFAULT NULL,
     preferred_time VARCHAR(20) DEFAULT NULL,
-    comment TEXT DEFAULT NULL,
-    admin_comment TEXT DEFAULT NULL,
+    comment VARCHAR(2000) DEFAULT NULL,
+    admin_comment VARCHAR(2000) DEFAULT NULL,
     status ENUM('new', 'in_progress', 'completed', 'rejected') DEFAULT 'new',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS notification_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     provider VARCHAR(50) NOT NULL UNIQUE,
     enabled TINYINT(1) NOT NULL DEFAULT 0,
-    config TEXT NOT NULL DEFAULT '{}',
+    config VARCHAR(1000) NOT NULL DEFAULT '{}',
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
