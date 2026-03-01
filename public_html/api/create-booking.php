@@ -52,18 +52,40 @@ $pdo = getDB();
 
 if ($preferredDate !== null && $preferredTime !== null) {
     $dateObj = $dateObj ?? DateTime::createFromFormat('Y-m-d', $preferredDate);
-    $dow = (int)$dateObj->format('w');
-    $stmt = $pdo->prepare("SELECT start_time, end_time, is_working_day, slot_duration_minutes FROM work_schedule WHERE day_of_week = ?");
-    $stmt->execute([$dow]);
-    $daySchedule = $stmt->fetch();
 
-    if (!$daySchedule || !$daySchedule['is_working_day']) {
-        jsonError('Выбранный день не является рабочим');
+    $stmt = $pdo->prepare("SELECT * FROM schedule_overrides WHERE ? BETWEEN start_date AND end_date ORDER BY id DESC LIMIT 1");
+    $stmt->execute([$preferredDate]);
+    $override = $stmt->fetch();
+
+    if ($override) {
+        if (!$override['is_working_day']) {
+            jsonError('Выбранный день не является рабочим (переопределение)');
+        }
+        $startTime = $override['start_time'];
+        $endTime = $override['end_time'];
+        $slotDuration = (int)$override['slot_duration_minutes'];
+    } else {
+        $stmt = $pdo->prepare("SELECT blocked_date FROM blocked_dates WHERE blocked_date = ?");
+        $stmt->execute([$preferredDate]);
+        if ($stmt->fetch()) {
+            jsonError('Выбранная дата является выходным днём');
+        }
+
+        $dow = (int)$dateObj->format('w');
+        $stmt = $pdo->prepare("SELECT start_time, end_time, is_working_day, slot_duration_minutes FROM work_schedule WHERE day_of_week = ?");
+        $stmt->execute([$dow]);
+        $daySchedule = $stmt->fetch();
+
+        if (!$daySchedule || !$daySchedule['is_working_day']) {
+            jsonError('Выбранный день не является рабочим');
+        }
+        $startTime = $daySchedule['start_time'];
+        $endTime = $daySchedule['end_time'];
+        $slotDuration = (int)($daySchedule['slot_duration_minutes'] ?? 45);
     }
 
-    $slotDuration = (int)($daySchedule['slot_duration_minutes'] ?? 45);
-    $startParts = explode(':', $daySchedule['start_time']);
-    $endParts = explode(':', $daySchedule['end_time']);
+    $startParts = explode(':', $startTime);
+    $endParts = explode(':', $endTime);
     $startMin = (int)$startParts[0] * 60 + (int)$startParts[1];
     $endMin = (int)$endParts[0] * 60 + (int)$endParts[1];
 

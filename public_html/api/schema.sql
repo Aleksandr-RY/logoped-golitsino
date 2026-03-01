@@ -58,6 +58,25 @@ CREATE TABLE IF NOT EXISTS notification_settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+CREATE TABLE IF NOT EXISTS blocked_dates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    blocked_date DATE NOT NULL UNIQUE,
+    reason VARCHAR(255) DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS schedule_overrides (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    start_time VARCHAR(5) NOT NULL DEFAULT '09:00',
+    end_time VARCHAR(5) NOT NULL DEFAULT '18:00',
+    slot_duration_minutes INT NOT NULL DEFAULT 45,
+    is_working_day TINYINT(1) NOT NULL DEFAULT 1,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_dates (start_date, end_date)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 INSERT IGNORE INTO work_schedule (day_of_week, is_working_day) VALUES
 (0, 0), (1, 1), (2, 1), (3, 1), (4, 1), (5, 1), (6, 0);
 
